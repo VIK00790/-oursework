@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Удаление товара{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Подтвердите удаление</h5>
+            </div>
+            <div class="card-body">
+                <p class="lead">Вы действительно хотите удалить товар?</p>
+                
+                <div class="card bg-light mb-3">
+                    <div class="card-body">
+                        <h6 class="card-title">{{ marketplace.title }}</h6>
+                        <p class="card-text small text-muted mb-0">
+                            Цена: {{ marketplace.price|floatformat:2 }} ₽ | 
+                            Дата: {{ marketplace.pub_date|date:"d.m.Y" }}
+                        </p>
+                    </div>
+                </div>
+                
+                <p class="text-danger small">
+                    <i class="bi bi-info-circle"></i> 
+                    Это действие нельзя отменить. Все данные о товаре будут удалены.
+                </p>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Да, удалить
+                        </button>
+                        <a href="{% url 'marketplace:profile' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-lg"></i> Отмена
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

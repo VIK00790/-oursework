@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+
+{% block title %}Каталог скинов{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Боковая панель: поиск и фильтры -->
+    <div class="col-lg-3 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-funnel"></i> Фильтры</h5>
+            </div>
+            <div class="card-body">
+                <!-- Форма поиска с тегами -->
+                <form method="get" action="{% url 'marketplace:marketplace_list' %}">
+                    {% if current_sort and current_sort != 'date' %}
+                    <input type="hidden" name="sort" value="{{ current_sort }}">
+                    {% endif %}
+                    
+                    <!-- Текстовый поиск -->
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Поиск по названию</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="q" 
+                                   placeholder="Название, описание..." 
+                                   value="{{ query|default:'' }}">
+                            <button class="btn btn-outline-primary" type="submit">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Выбор тега -->
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Фильтр по тегу</label>
+                        <select name="tag" class="form-select" id="tag-select">
+                            <option value="">Все теги</option>
+                            {% for tag in all_tags %}
+                            <option value="{{ tag.id }}" 
+                                    {% if selected_tag|stringformat:"s" == tag.id|stringformat:"s" %}selected{% endif %}>
+                                {{ tag.name }} ({{ tag.marketplace_set.count }})
+                            </option>
+                            {% empty %}
+                            <option value="" disabled>Нет доступных тегов</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Кнопка сброса -->
+                    {% if query or selected_tag or current_sort %}
+                    <a href="{% url 'marketplace:marketplace_list' %}" class="btn btn-outline-secondary btn-sm w-100">
+                        <i class="bi bi-x-circle"></i> Сбросить все фильтры
+                    </a>
+                    {% endif %}
+                </form>
+
+                <!-- Сортировка -->
+                <div class="mb-3 mt-3">
+                    <label class="form-label small text-muted">Сортировка</label>
+                    <div class="d-grid gap-2">
+                        <a href="?{% if query %}q={{ query }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}sort=date" 
+                           class="btn btn-sm {% if current_sort == 'date' or not current_sort %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                            🕐 По дате
+                        </a>
+                        <a href="?{% if query %}q={{ query }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}sort=price_low" 
+                           class="btn btn-sm {% if current_sort == 'price_low' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                            💰 Сначала дешёвые
+                        </a>
+                        <a href="?{% if query %}q={{ query }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}sort=price_high" 
+                           class="btn btn-sm {% if current_sort == 'price_high' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                            💎 Сначала дорогие
+                        </a>
+                        <a href="?{% if query %}q={{ query }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}sort=tags" 
+                           class="btn btn-sm {% if current_sort == 'tags' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                            🏷️ По тегам
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-9">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3>
+                Каталог скинов
+                {% if query %}
+                <small class="text-muted fs-6">— поиск: "{{ query }}"</small>
+                {% endif %}
+                {% if selected_tag %}
+                <small class="text-muted fs-6">— тег: 
+                    {% for tag in all_tags %}
+                        {% if tag.id|stringformat:"s" == selected_tag %}{{ tag.name }}{% endif %}
+                    {% endfor %}
+                </small>
+                {% endif %}
+                {% if query or selected_tag %}
+                <a href="{% url 'marketplace:marketplace_list' %}" class="btn btn-sm btn-outline-secondary ms-2">✕ Сбросить</a>
+                {% endif %}
+            </h3>
+            <span class="badge bg-secondary">{{ page_obj.paginator.count }} скинов</span>
+        </div>
+
+        {% if page_obj %}
+        <div class="row row-cols-1 row-cols-md-2 g-3">
+            {% for marketplace in page_obj %}
+            <div class="col">
+                <div class="card h-100 card-hover">
+                    <div class="row g-0">
+                        <div class="col-md-4">
+                            {% if marketplace.image %}
+                            <img src="{{ marketplace.image.url }}" 
+                                 class="img-fluid rounded-start" 
+                                 alt="{{ marketplace.title }}" 
+                                 style="height: 150px; object-fit: cover;">
+                            {% else %}
+                            <div class="h-100 d-flex align-items-center justify-content-center bg-secondary rounded-start text-white">
+                                <i class="bi bi-image fs-2"></i>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-8">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <a href="{% url 'marketplace:marketplace_detail' marketplace.pk %}" 
+                                       class="text-decoration-none text-dark">
+                                        {{ marketplace.title|truncatechars:40 }}
+                                    </a>
+                                </h5>
+                                <p class="card-text small text-muted mb-2">
+                                    {{ marketplace.content|truncatewords:15 }}
+                                </p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold text-primary fs-5">
+                                        {{ marketplace.price|floatformat:2 }} ₽
+                                    </span>
+                                    <small class="text-muted">
+                                        {{ marketplace.pub_date|date:"d.m.Y" }}
+                                    </small>
+                                </div>
+                                <div class="mt-2">
+                                    <small class="text-muted">👤 {{ marketplace.author.username }}</small>
+                                    {% if marketplace.tags.all %}
+                                    <div class="mt-1">
+                                        {% for tag in marketplace.tags.all|slice:":3" %}
+                                        <span class="badge bg-light text-dark border">{{ tag.name }}</span>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Пагинация -->
+        {% if page_obj.has_other_pages %}
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}{% if current_sort and current_sort != 'date' %}sort={{ current_sort }}&{% endif %}page=1">
+                        &laquo; Первая
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}{% if current_sort and current_sort != 'date' %}sort={{ current_sort }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                        ← Назад
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">&laquo; Первая</span></li>
+                <li class="page-item disabled"><span class="page-link">← Назад</span></li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > page_obj.number|add:'-2' and num < page_obj.number|add:'2' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}{% if current_sort and current_sort != 'date' %}sort={{ current_sort }}&{% endif %}page={{ num }}">
+                            {{ num }}
+                        </a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}{% if current_sort and current_sort != 'date' %}sort={{ current_sort }}&{% endif %}page={{ page_obj.next_page_number }}">
+                        Вперёд →
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}{% if current_sort and current_sort != 'date' %}sort={{ current_sort }}&{% endif %}page={{ page_obj.paginator.num_pages }}">
+                        Последняя &raquo;
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">Вперёд →</span></li>
+                <li class="page-item disabled"><span class="page-link">Последняя &raquo;</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="alert alert-warning">
+            <h5><i class="bi bi-exclamation-triangle"></i> Ничего не найдено</h5>
+            <p class="mb-0">
+                {% if query or selected_tag %}
+                Попробуйте изменить поисковый запрос или <a href="{% url 'marketplace:marketplace_list' %}">сбросить фильтры</a>.
+                {% else %}
+                В каталоге пока нет скинов.
+                {% endif %}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

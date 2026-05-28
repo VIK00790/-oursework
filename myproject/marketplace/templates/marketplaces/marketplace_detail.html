@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ marketplace.title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Карточка товара -->
+    <div class="col-lg-8">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'marketplace:index' %}">Главная</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'marketplace:marketplace_list' %}">Каталог</a></li>
+                <li class="breadcrumb-item active">{{ marketplace.title|truncatechars:30 }}</li>
+            </ol>
+        </nav>
+
+        <article class="card shadow-sm">
+            {% if marketplace.image %}
+            <img src="{{ marketplace.image.url }}" class="card-img-top" alt="{{ marketplace.title }}" style="max-height: 400px; object-fit: contain; background: #f8f9fa;">
+            {% endif %}
+            <div class="card-body">
+                <h1 class="card-title h3">{{ marketplace.title }}</h1>
+                
+                <div class="d-flex flex-wrap gap-2 align-items-center text-muted small mb-3">
+                    <span><i class="bi bi-person"></i> {{ marketplace.author.username }}</span>
+                    <span>•</span>
+                    <span><i class="bi bi-clock"></i> {{ marketplace.pub_date|date:"d.m.Y H:i" }}</span>
+                    {% if marketplace.tags.all %}
+                    <span>•</span>
+                    <div>
+                        {% for tag in marketplace.tags.all %}
+                        <span class="badge bg-secondary">{{ tag.name }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="alert alert-primary d-flex align-items-center">
+                    <i class="bi bi-currency-ruble fs-4 me-2"></i>
+                    <span class="fs-4 fw-bold">{{ marketplace.price|floatformat:2 }} ₽</span>
+                </div>
+
+                <div class="content mt-4">
+                    {{ marketplace.content|linebreaks }}
+                </div>
+            </div>
+        </article>
+
+        <!-- Комментарии -->
+        <div class="mt-5">
+            <h4 class="mb-3">💬 Отзывы ({{ comments.count }})</h4>
+            
+            {% if user.is_authenticated %}
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title small text-muted mb-3">Оставить отзыв</h5>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            {{ form.text }}
+                            {% if form.text.errors %}
+                            <div class="text-danger small mt-1">{{ form.text.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send"></i> Опубликовать
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> <a href="{% url 'login' %}?next={{ request.path }}">Войдите</a>, чтобы оставить отзыв.
+            </div>
+            {% endif %}
+
+            <!-- Список комментариев -->
+            {% if comments %}
+            <div class="list-group">
+                {% for comment in comments %}
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <strong>{{ comment.user.username }}</strong>
+                            <small class="text-muted ms-2">{{ comment.created_at|date:"d.m.Y H:i" }}</small>
+                        </div>
+                            {% if comment.user == user %}
+                            <div class="dropdown">
+                                
+                                <td class="text-end">
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'marketplace:profile_comment_edit' comment.id %}" 
+                                        class="btn btn-outline-primary" title="Редактировать">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="{% url 'marketplace:profile_comment_delete' comment.id %}" 
+                                        class="btn btn-outline-danger" title="Удалить">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </div>
+                            {% endif %}
+                        </div>
+                    <p class="mb-0 mt-2">{{ comment.text|linebreaksbr }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">Отзывов пока нет. Будьте первым!</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Боковая панель: действия -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm sticky-top" style="top: 100px;">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Действия</h5>
+                
+                {% if user.is_authenticated %}
+                    {% if is_saved %}
+                        <a href="{% url 'marketplace:unsave_marketplace' marketplace.pk %}" class="btn btn-danger w-100 mb-2">
+                            <i class="bi bi-bookmark-heart-fill"></i> Удалить из корзины
+                        </a>
+                    {% else %}
+                        <a href="{% url 'marketplace:save_marketplace' marketplace.pk %}" class="btn btn-success w-100 mb-2">
+                            <i class="bi bi-bookmark-plus"></i> Добавить в корзину
+                        </a>
+                    {% endif %}
+                {% else %}
+                <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-secondary w-100 mb-2">
+                    <i class="bi bi-box-arrow-in-right"></i> Войдите для покупок
+                </a>
+                {% endif %}
+
+                <a href="{% url 'marketplace:marketplace_list' %}" class="btn btn-outline-secondary w-100">
+                    <i class="bi bi-arrow-left"></i> Вернуться в каталог
+                </a>
+
+                <hr>
+
+                <h6 class="small text-muted mb-2">Продавец</h6>
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center text-white me-2" style="width: 40px; height: 40px;">
+                        {{ marketplace.author.username|first|upper }}
+                    </div>
+                    <div>
+                        <strong>{{ marketplace.author.username }}</strong>
+                        <div class="small text-muted">На площадке с {{ marketplace.author.date_joined|date:"m.Y" }}</div>
+                    </div>
+                </div>
+
+                {% if marketplace.tags.all %}
+                <div>
+                    <h6 class="small text-muted mb-2">Теги</h6>
+                    {% for tag in marketplace.tags.all %}
+                    <a href="{% url 'marketplace:marketplace_list' %}?q={{ tag.name }}" class="badge bg-light text-dark text-decoration-none me-1 mb-1">
+                        {{ tag.name }}
+                    </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

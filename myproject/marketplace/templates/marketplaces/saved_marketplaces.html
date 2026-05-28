@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Корзина — Торговая площадка{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="bi bi-bookmark-heart"></i> Ваша корзина</h3>
+    <span class="badge bg-primary fs-6">{{ saved_marketplaces.count }} товаров</span>
+</div>
+
+{% if saved_marketplaces %}
+<div class="row row-cols-1 row-cols-md-2 g-4">
+    {% for saved in saved_marketplaces %}
+    <div class="col">
+        <div class="card h-100 card-hover position-relative">
+            <!-- Кнопка удаления -->
+            <a href="{% url 'marketplace:unsave_marketplace' saved.marketplace.pk %}" 
+               class="btn btn-sm btn-outline-danger position-absolute top-0 end-0 m-2"
+               title="Удалить из корзины"
+               onclick="return confirm('Удалить этот товар из корзины?')">
+                <i class="bi bi-x-lg"></i>
+            </a>
+            
+            {% if saved.marketplace.image %}
+            <img src="{{ saved.marketplace.image.url }}" class="card-img-top" alt="{{ saved.marketplace.title }}" style="height: 180px; object-fit: cover;">
+            {% else %}
+            <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center text-white" style="height: 180px;">
+                <i class="bi bi-image fs-1"></i>
+            </div>
+            {% endif %}
+            
+            <div class="card-body">
+                <h5 class="card-title">
+                    <a href="{% url 'marketplace:marketplace_detail' saved.marketplace.pk %}" class="text-decoration-none text-dark stretched-link">
+                        {{ saved.marketplace.title|truncatechars:40 }}
+                    </a>
+                </h5>
+                <p class="card-text text-muted small">
+                    {{ saved.marketplace.content|truncatewords:20 }}
+                </p>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <span class="fw-bold text-primary">{{ saved.marketplace.price|floatformat:2 }} ₽</span>
+                    <small class="text-muted">
+                        <i class="bi bi-clock-history"></i> {{ saved.saved_at|date:"d.m.Y" }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Итого -->
+<div class="card mt-4 bg-light">
+    <div class="card-body d-flex justify-content-between align-items-center">
+        <span class="fs-5">Всего товаров: <strong>{{ saved_marketplaces.count }}</strong></span>
+        <span class="fs-5">Товаров в корзине: <strong class="text-primary">
+            {{ saved_marketplaces.count }}
+        </strong></span>
+        <button class="btn btn-success btn-lg" disabled>
+            <i class="bi bi-cart-check"></i> Оформить заказ
+        </button>
+    </div>
+</div>
+
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-bookmark text-muted" style="font-size: 4rem;"></i>
+    <h4 class="mt-3 text-muted">Корзина пуста</h4>
+    <p class="text-muted">Добавляйте товары в корзину, чтобы не потерять их.</p>
+    <a href="{% url 'marketplace:marketplace_list' %}" class="btn btn-primary mt-2">
+        <i class="bi bi-search"></i> Перейти к каталогу
+    </a>
+</div>
+{% endif %} 
+{% endblock %}

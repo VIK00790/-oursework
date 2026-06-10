@@ -6,6 +6,8 @@ from django.db.models import Q
 from django.core.paginator import Paginator
 from .models import Marketplace, Tag, SavedMarketplace, Comment
 from .forms import CommentForm
+from django.db.models import Q, Min, Max
+from django.db import models
 
 # Create your views here.
 def index(request):
@@ -20,7 +22,7 @@ def index(request):
 
 def marketplace_list(request):
     marketplaces = Marketplace.objects.filter(is_public=True)
-
+    
     sort_by = request.GET.get('sort', 'date')
     if sort_by == 'price_low':
         marketplaces = marketplaces.order_by('price')  # Сначала дешёвые
@@ -37,15 +39,41 @@ def marketplace_list(request):
     query = request.GET.get('q', '')
     if query:
         marketplaces = marketplaces.filter(Q(title__icontains = query) | Q(content__icontains = query))
+    
+    selected_tags = request.GET.getlist('tags') # Фильтр по тегам
+    if selected_tags:
+        # Фильтруем по нескольким тегам (товары, у которых есть ВСЕ выбранные теги)
+        for tag_id in selected_tags:
+            marketplaces = marketplaces.filter(tags__id=tag_id)
+        marketplaces = marketplaces.distinct()
+
+    price_min = request.GET.get('price_min', '') # Фильтр по цене
+    if price_min:
+        try:
+            marketplaces = marketplaces.filter(price__gte=float(price_min))
+        except ValueError:
+            pass
+
+    price_max = request.GET.get('price_max', '') # Фильтр по цене
+    if price_max:
+        try:
+            marketplaces = marketplaces.filter(price__lte=float(price_max)) 
+        except ValueError:
+            pass
 
     tag_id = request.GET.get('tag', '')
     all_tags = Tag.objects.all().order_by('name')
-    if tag_id:
-        try:
-            tag_id = int(tag_id)  # ← Преобразуем в число
-            marketplaces = marketplaces.filter(tags__id=tag_id).distinct()  # ← distinct() убирает дубли
-        except (ValueError, TypeError):
-            pass
+    
+    price_range = Marketplace.objects.filter(is_public=True).aggregate(
+        min_price = models.Min('price'),
+        max_price = models.Max('price'),
+    )
+
+    active_filters_count = len(selected_tags)
+    if price_min or price_max:
+        active_filters_count += 1
+    if query:
+        active_filters_count += 1
     
     #Пагинация
     paginator = Paginator(marketplaces, 10)
@@ -55,10 +83,16 @@ def marketplace_list(request):
         'page_obj': page_obj,
         'query': query,
         'current_sort': sort_by,
-        'selected_tag': tag_id,
+        'selected_tags': selected_tags, 
         'all_tags': all_tags,
+        'price_min': price_min,
+        'price_max': price_max,
+        'price_range': price_range,
+        'active_filters_count': active_filters_count,
     }
     return render (request, 'marketplaces/marketplaces_list.html', context)
+
+    
 
 def marketplace_detail(request, pk):
     marketplace = get_object_or_404(Marketplace, pk=pk)

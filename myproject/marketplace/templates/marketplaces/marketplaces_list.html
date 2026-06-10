@@ -4,103 +4,182 @@
 
 {% block content %}
 <div class="row">
-    <!-- Боковая панель: поиск и фильтры -->
+    <!-- Боковая панель с фильтрами -->
     <div class="col-lg-3 mb-4">
-        <div class="card shadow-sm">
+        <div class="card shadow-sm sticky-top" style="top: 100px;">
             <div class="card-header bg-primary text-white">
-                <h5 class="mb-0"><i class="bi bi-funnel"></i> Фильтры</h5>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-funnel"></i> Фильтры
+                        {% if active_filters_count %}
+                        <span class="badge bg-light text-primary ms-2">{{ active_filters_count }}</span>
+                        {% endif %}
+                    </h5>
+                    {% if active_filters_count %}
+                    <a href="{% url 'marketplace:marketplace_list' %}" class="btn btn-sm btn-light">
+                        <i class="bi bi-x-circle"></i> Сбросить
+                    </a>
+                    {% endif %}
+                </div>
             </div>
             <div class="card-body">
-                <!-- Форма поиска с тегами -->
-                <form method="get" action="{% url 'marketplace:marketplace_list' %}">
+                <form method="get" action="{% url 'marketplace:marketplace_list' %}" id="filter-form">
+                    <!-- Сортировка (скрытое поле) -->
                     {% if current_sort and current_sort != 'date' %}
                     <input type="hidden" name="sort" value="{{ current_sort }}">
                     {% endif %}
                     
-                    <!-- Текстовый поиск -->
-                    <div class="mb-3">
-                        <label class="form-label small text-muted">Поиск по названию</label>
+                    <!-- Поиск по тексту -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small">
+                            <i class="bi bi-search"></i> Поиск
+                        </label>
                         <div class="input-group">
                             <input type="text" class="form-control" name="q" 
                                    placeholder="Название, описание..." 
                                    value="{{ query|default:'' }}">
-                            <button class="btn btn-outline-primary" type="submit">
+                            <button class="btn btn-primary" type="submit">
                                 <i class="bi bi-search"></i>
                             </button>
                         </div>
                     </div>
 
-                    <!-- Выбор тега -->
-                    <div class="mb-3">
-                        <label class="form-label small text-muted">Фильтр по тегу</label>
-                        <select name="tag" class="form-select" id="tag-select">
-                            <option value="">Все теги</option>
+                    <!-- Фильтр по цене -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small">
+                            <i class="bi bi-currency-ruble"></i> Цена (₽)
+                        </label>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <input type="number" class="form-control form-control-sm" 
+                                       name="price_min" 
+                                       placeholder="От {{ price_range.min_price|floatformat:0|default:'0' }}" 
+                                       value="{{ price_min }}"
+                                       min="0" step="10">
+                            </div>
+                            <div class="col-6">
+                                <input type="number" class="form-control form-control-sm" 
+                                       name="price_max" 
+                                       placeholder="До {{ price_range.max_price|floatformat:0|default:'∞' }}" 
+                                       value="{{ price_max }}"
+                                       min="0" step="10">
+                            </div>
+                        </div>
+                        {% if price_range.min_price and price_range.max_price %}
+                        <div class="small text-muted mt-1">
+                            Диапазон: {{ price_range.min_price|floatformat:0 }} - {{ price_range.max_price|floatformat:0 }} ₽
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Фильтр по тегам (чекбоксы) -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small">
+                            <i class="bi bi-tags"></i> Теги
+                        </label>
+                        <div class="d-flex flex-column gap-2" style="max-height: 300px; overflow-y: auto;">
                             {% for tag in all_tags %}
-                            <option value="{{ tag.id }}" 
-                                    {% if selected_tag|stringformat:"s" == tag.id|stringformat:"s" %}selected{% endif %}>
-                                {{ tag.name }} ({{ tag.marketplace_set.count }})
-                            </option>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" 
+                                       name="tags" 
+                                       value="{{ tag.id }}" 
+                                       id="tag_{{ tag.id }}"
+                                       {% if tag.id|stringformat:"s" in selected_tags %}checked{% endif %}>
+                                <label class="form-check-label" for="tag_{{ tag.id }}">
+                                    {{ tag.name }}
+                                    <span class="badge bg-secondary rounded-pill ms-1">
+                                        {{ tag.marketplace_set.count }}
+                                    </span>
+                                </label>
+                            </div>
                             {% empty %}
-                            <option value="" disabled>Нет доступных тегов</option>
+                            <p class="text-muted small">Нет доступных тегов</p>
                             {% endfor %}
-                        </select>
+                        </div>
                     </div>
 
-                    <!-- Кнопка сброса -->
-                    {% if query or selected_tag or current_sort %}
-                    <a href="{% url 'marketplace:marketplace_list' %}" class="btn btn-outline-secondary btn-sm w-100">
-                        <i class="bi bi-x-circle"></i> Сбросить все фильтры
-                    </a>
-                    {% endif %}
+                    <!-- Кнопка применить -->
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-check-lg"></i> Применить фильтры
+                    </button>
                 </form>
-
-                <!-- Сортировка -->
-                <div class="mb-3 mt-3">
-                    <label class="form-label small text-muted">Сортировка</label>
-                    <div class="d-grid gap-2">
-                        <a href="?{% if query %}q={{ query }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}sort=date" 
-                           class="btn btn-sm {% if current_sort == 'date' or not current_sort %}btn-primary{% else %}btn-outline-primary{% endif %}">
-                            🕐 По дате
-                        </a>
-                        <a href="?{% if query %}q={{ query }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}sort=price_low" 
-                           class="btn btn-sm {% if current_sort == 'price_low' %}btn-primary{% else %}btn-outline-primary{% endif %}">
-                            💰 Сначала дешёвые
-                        </a>
-                        <a href="?{% if query %}q={{ query }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}sort=price_high" 
-                           class="btn btn-sm {% if current_sort == 'price_high' %}btn-primary{% else %}btn-outline-primary{% endif %}">
-                            💎 Сначала дорогие
-                        </a>
-                        <a href="?{% if query %}q={{ query }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}sort=tags" 
-                           class="btn btn-sm {% if current_sort == 'tags' %}btn-primary{% else %}btn-outline-primary{% endif %}">
-                            🏷️ По тегам
-                        </a>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
 
+    <!-- Основной контент -->
     <div class="col-lg-9">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3>
-                Каталог скинов
-                {% if query %}
-                <small class="text-muted fs-6">— поиск: "{{ query }}"</small>
-                {% endif %}
-                {% if selected_tag %}
-                <small class="text-muted fs-6">— тег: 
-                    {% for tag in all_tags %}
-                        {% if tag.id|stringformat:"s" == selected_tag %}{{ tag.name }}{% endif %}
+        <!-- Активные фильтры -->
+        {% if selected_tags or price_min or price_max or query %}
+        <div class="card bg-light mb-3">
+            <div class="card-body py-2">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <span class="small fw-bold">Активные фильтры:</span>
+                    
+                    {% if query %}
+                    <span class="badge bg-primary">
+                        <i class="bi bi-search"></i> "{{ query }}"
+                        <a href="?{% if selected_tags %}{% for tag in selected_tags %}tags={{ tag }}&{% endfor %}{% endif %}{% if price_min %}price_min={{ price_min }}&{% endif %}{% if price_max %}price_max={{ price_max }}&{% endif %}{% if current_sort != 'date' %}sort={{ current_sort }}{% endif %}" 
+                           class="text-white ms-1">×</a>
+                    </span>
+                    {% endif %}
+                    
+                    {% if price_min or price_max %}
+                    <span class="badge bg-success">
+                        <i class="bi bi-currency-ruble"></i> 
+                        {% if price_min %}от {{ price_min }}{% endif %}
+                        {% if price_min and price_max %} - {% endif %}
+                        {% if price_max %}до {{ price_max }}{% endif %} ₽
+                        <a href="?{% if query %}q={{ query }}&{% endif %}{% for tag in selected_tags %}tags={{ tag }}&{% endfor %}{% if current_sort != 'date' %}sort={{ current_sort }}{% endif %}" 
+                           class="text-white ms-1">×</a>
+                    </span>
+                    {% endif %}
+                    
+                    {% for tag_id in selected_tags %}
+                        {% for tag in all_tags %}
+                            {% if tag.id|stringformat:"s" == tag_id %}
+                            <span class="badge bg-secondary">
+                                <i class="bi bi-tag"></i> {{ tag.name }}
+                                <a href="?{% if query %}q={{ query }}&{% endif %}{% for t in selected_tags %}{% if t != tag_id %}tags={{ t }}&{% endif %}{% endfor %}{% if price_min %}price_min={{ price_min }}&{% endif %}{% if price_max %}price_max={{ price_max }}&{% endif %}{% if current_sort != 'date' %}sort={{ current_sort }}{% endif %}" 
+                                   class="text-white ms-1">×</a>
+                            </span>
+                            {% endif %}
+                        {% endfor %}
                     {% endfor %}
-                </small>
-                {% endif %}
-                {% if query or selected_tag %}
-                <a href="{% url 'marketplace:marketplace_list' %}" class="btn btn-sm btn-outline-secondary ms-2">✕ Сбросить</a>
-                {% endif %}
+                    
+                    <a href="{% url 'marketplace:marketplace_list' %}" class="btn btn-sm btn-outline-secondary ms-auto">
+                        <i class="bi bi-x-circle"></i> Сбросить все
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Заголовок и сортировка -->
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h3 class="mb-0">
+                Каталог скинов
+                <span class="badge" style="background-color: rgba(118, 75, 162, 0.3); color: #d0b8ff; border: 1px solid rgba(118, 75, 162, 0.5);">{{ page_obj.paginator.count }} товаров</span>
             </h3>
-            <span class="badge bg-secondary">{{ page_obj.paginator.count }} скинов</span>
+            
+            <!-- Кнопки сортировки -->
+            <div class="btn-group btn-group-sm" role="group">
+                <a href="?{% if query %}q={{ query }}&{% endif %}{% for tag in selected_tags %}tags={{ tag }}&{% endfor %}{% if price_min %}price_min={{ price_min }}&{% endif %}{% if price_max %}price_max={{ price_max }}&{% endif %}sort=date" 
+                   class="btn {% if current_sort == 'date' or not current_sort %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    Новые
+                </a>
+                <a href="?{% if query %}q={{ query }}&{% endif %}{% for tag in selected_tags %}tags={{ tag }}&{% endfor %}{% if price_min %}price_min={{ price_min }}&{% endif %}{% if price_max %}price_max={{ price_max }}&{% endif %}sort=price_low" 
+                   class="btn {% if current_sort == 'price_low' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    Дешёвые
+                </a>
+                <a href="?{% if query %}q={{ query }}&{% endif %}{% for tag in selected_tags %}tags={{ tag }}&{% endfor %}{% if price_min %}price_min={{ price_min }}&{% endif %}{% if price_max %}price_max={{ price_max }}&{% endif %}sort=price_high" 
+                   class="btn {% if current_sort == 'price_high' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    Дорогие
+                </a>
+            </div>
         </div>
 
+        <!-- Список товаров -->
         {% if page_obj %}
         <div class="row row-cols-1 row-cols-md-2 g-3">
             {% for marketplace in page_obj %}
@@ -112,7 +191,7 @@
                             <img src="{{ marketplace.image.url }}" 
                                  class="img-fluid rounded-start" 
                                  alt="{{ marketplace.title }}" 
-                                 style="height: 150px; object-fit: cover;">
+                                 style="height: 150px; object-fit: cover; width: 100%;">
                             {% else %}
                             <div class="h-100 d-flex align-items-center justify-content-center bg-secondary rounded-start text-white">
                                 <i class="bi bi-image fs-2"></i>
@@ -138,16 +217,15 @@
                                         {{ marketplace.pub_date|date:"d.m.Y" }}
                                     </small>
                                 </div>
+                                {% if marketplace.tags.all %}
                                 <div class="mt-2">
-                                    <small class="text-muted">👤 {{ marketplace.author.username }}</small>
-                                    {% if marketplace.tags.all %}
-                                    <div class="mt-1">
-                                        {% for tag in marketplace.tags.all|slice:":3" %}
-                                        <span class="badge bg-light text-dark border">{{ tag.name }}</span>
-                                        {% endfor %}
-                                    </div>
-                                    {% endif %}
+                                    {% for tag in marketplace.tags.all|slice:":3" %}
+                                    <a href="?tags={{ tag.id }}" class="badge bg-light text-dark border text-decoration-none">
+                                        {{ tag.name }}
+                                    </a>
+                                    {% endfor %}
                                 </div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -156,24 +234,26 @@
             {% endfor %}
         </div>
 
-        <!-- Пагинация -->
+        <!-- Пагинация с сохранением всех фильтров -->
         {% if page_obj.has_other_pages %}
         <nav class="mt-4">
             <ul class="pagination justify-content-center">
+                <!-- Построение URL с сохранением всех параметров -->
+                {% with query_params='' %}
+                    {% if query %}{% with query_params=query_params|add:'q='|add:query|add:'&' %}{% endwith %}{% endif %}
+                    {% for tag in selected_tags %}{% with query_params=query_params|add:'tags='|add:tag|add:'&' %}{% endwith %}{% endfor %}
+                    {% if price_min %}{% with query_params=query_params|add:'price_min='|add:price_min|add:'&' %}{% endwith %}{% endif %}
+                    {% if price_max %}{% with query_params=query_params|add:'price_max='|add:price_max|add:'&' %}{% endwith %}{% endif %}
+                    {% if current_sort and current_sort != 'date' %}{% with query_params=query_params|add:'sort='|add:current_sort|add:'&' %}{% endwith %}{% endif %}
+                {% endwith %}
+                
                 {% if page_obj.has_previous %}
                 <li class="page-item">
-                    <a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}{% if current_sort and current_sort != 'date' %}sort={{ current_sort }}&{% endif %}page=1">
-                        &laquo; Первая
-                    </a>
+                    <a class="page-link" href="?{{ query_params }}page=1">&laquo; Первая</a>
                 </li>
                 <li class="page-item">
-                    <a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}{% if current_sort and current_sort != 'date' %}sort={{ current_sort }}&{% endif %}page={{ page_obj.previous_page_number }}">
-                        ← Назад
-                    </a>
+                    <a class="page-link" href="?{{ query_params }}page={{ page_obj.previous_page_number }}">← Назад</a>
                 </li>
-                {% else %}
-                <li class="page-item disabled"><span class="page-link">&laquo; Первая</span></li>
-                <li class="page-item disabled"><span class="page-link">← Назад</span></li>
                 {% endif %}
 
                 {% for num in page_obj.paginator.page_range %}
@@ -181,27 +261,18 @@
                     <li class="page-item active"><span class="page-link">{{ num }}</span></li>
                     {% elif num > page_obj.number|add:'-2' and num < page_obj.number|add:'2' %}
                     <li class="page-item">
-                        <a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}{% if current_sort and current_sort != 'date' %}sort={{ current_sort }}&{% endif %}page={{ num }}">
-                            {{ num }}
-                        </a>
+                        <a class="page-link" href="?{{ query_params }}page={{ num }}">{{ num }}</a>
                     </li>
                     {% endif %}
                 {% endfor %}
 
                 {% if page_obj.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}{% if current_sort and current_sort != 'date' %}sort={{ current_sort }}&{% endif %}page={{ page_obj.next_page_number }}">
-                        Вперёд →
-                    </a>
+                    <a class="page-link" href="?{{ query_params }}page={{ page_obj.next_page_number }}">Вперёд →</a>
                 </li>
                 <li class="page-item">
-                    <a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}{% if current_sort and current_sort != 'date' %}sort={{ current_sort }}&{% endif %}page={{ page_obj.paginator.num_pages }}">
-                        Последняя &raquo;
-                    </a>
+                    <a class="page-link" href="?{{ query_params }}page={{ page_obj.paginator.num_pages }}">Последняя &raquo;</a>
                 </li>
-                {% else %}
-                <li class="page-item disabled"><span class="page-link">Вперёд →</span></li>
-                <li class="page-item disabled"><span class="page-link">Последняя &raquo;</span></li>
                 {% endif %}
             </ul>
         </nav>
@@ -211,14 +282,34 @@
         <div class="alert alert-warning">
             <h5><i class="bi bi-exclamation-triangle"></i> Ничего не найдено</h5>
             <p class="mb-0">
-                {% if query or selected_tag %}
-                Попробуйте изменить поисковый запрос или <a href="{% url 'marketplace:marketplace_list' %}">сбросить фильтры</a>.
-                {% else %}
-                В каталоге пока нет скинов.
-                {% endif %}
+                Попробуйте изменить параметры поиска или 
+                <a href="{% url 'marketplace:marketplace_list' %}">сбросить фильтры</a>.
             </p>
         </div>
         {% endif %}
     </div>
 </div>
+
+<!-- JavaScript для автоматической отправки формы при изменении чекбоксов -->
+{% block extra_js %}
+<script>
+    // Автоматическая отправка формы при изменении тегов
+    document.querySelectorAll('input[name="tags"]').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            document.getElementById('filter-form').submit();
+        });
+    });
+
+    // Подтверждение перед сбросом формы
+    document.querySelectorAll('input[type="number"]').forEach(input => {
+        input.addEventListener('change', function() {
+            // Небольшая задержка, чтобы пользователь мог ввести оба значения
+            clearTimeout(window.priceTimeout);
+            window.priceTimeout = setTimeout(() => {
+                document.getElementById('filter-form').submit();
+            }, 500);
+        });
+    });
+</script>
+{% endblock %}
 {% endblock %}

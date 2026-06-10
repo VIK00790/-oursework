@@ -3,17 +3,57 @@
 {% block title %}Главная — Торговая площадка{% endblock %}
 
 {% block content %}
-<div class="p-4 p-md-1 mb-5 rounded-3 bg-primary text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-    <div class="container-fluid py-3">
-        <h1 class="display-5 fw-bold">Добро пожаловать на Nexus Skins World!</h1>
-        <p class="col-md-10 fs-5">Находите уникальные скины на своих персонажей из любимых игр.</p>
+<!-- Вариант 1: Игровой Неон -->
+<style>
+    .hero-gaming {
+        background: radial-gradient(circle at 50% 50%, #1e1e2f 0%, #0d0d14 100%);
+        border-bottom: 2px solid #764ba2;
+        position: relative;
+        overflow: hidden;
+    }
+    .hero-gaming::before {
+        content: '';
+        position: absolute;
+        top: -50%; left: -50%;
+        width: 200%; height: 200%;
+        background: radial-gradient(circle, rgba(118, 75, 162, 0.15) 0%, transparent 60%);
+        animation: pulse 8s infinite alternate;
+    }
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 0.5; }
+        100% { transform: scale(1.1); opacity: 0.8; }
+    }
+    .neon-title {
+        color: #ffffff;
+        text-shadow: 0 0 10px rgba(118, 75, 162, 0.8), 0 0 20px rgba(102, 126, 234, 0.6);
+        letter-spacing: 1px;
+    }
+    .hero-subtitle {
+        color: #a0a0b0;
+        font-weight: 300;
+    }
+</style>
+
+<div class="hero-gaming py-5 mb-5 text-center position-relative rounded-3">
+    <div class="container position-relative" style="z-index: 2;">
+        <h1 class="display-4 fw-bold neon-title mb-3">
+            Добро пожаловать на <span class="text-primary">Nexus Skins World</span>!
+        </h1>
+        <p class="hero-subtitle col-md-8 mx-auto fs-5 mb-4">
+            Находите уникальные скины на своих персонажей из любимых игр.
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="{% url 'marketplace:marketplace_list' %}" class="btn btn-primary btn-lg px-4 shadow-lg">
+                <i class="bi bi-search"></i> Найти свой стиль
+            </a>
+        </div>
     </div>
 </div>
 
 <!-- Последние товары -->
 <div class="row">
     <div class="col-12">
-        <h3 class="mb-3">🔥 Новинки</h3>
+        <h3 class="mb-4 text-white"><i class="bi bi-fire text-danger"></i> Новинки <i class="bi bi-fire text-danger"></i> </h3>
     </div>
 </div>
 
@@ -25,13 +65,13 @@
             {% if marketplace.image %}
             <img src="{{ marketplace.image.url }}" class="card-img-top" alt="{{ marketplace.title }}" style="height: 200px; object-fit: cover;">
             {% else %}
-            <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center text-white" style="height: 200px;">
+            <div class="card-img-top d-flex align-items-center justify-content-center text-muted" style="height: 200px; background: rgba(255,255,255,0.02);">
                 <i class="bi bi-image fs-1"></i>
             </div>
             {% endif %}
             <div class="card-body d-flex flex-column">
                 <h5 class="card-title">
-                    <a href="{% url 'marketplace:marketplace_detail' marketplace.pk %}" class="text-decoration-none text-dark stretched-link">
+                    <a href="{% url 'marketplace:marketplace_detail' marketplace.pk %}" class="text-decoration-none text-white stretched-link">
                         {{ marketplace.title|truncatechars:50 }}
                     </a>
                 </h5>
@@ -39,18 +79,18 @@
                     {{ marketplace.content|truncatewords:20 }}
                 </p>
                 <div class="d-flex justify-content-between align-items-center mt-2">
-                    <span class="fw-bold text-primary">{{ marketplace.price|floatformat:2 }} ₽</span>
+                    <span class="fw-bold text-primary fs-5">{{ marketplace.price|floatformat:2 }} ₽</span>
                     <small class="text-muted">{{ marketplace.pub_date|date:"d.m.Y" }}</small>
                 </div>
                 <div class="mt-2">
-                    <small class="text-muted">👤 {{ marketplace.author.username }}</small>
+                    <small class="text-muted d-block mb-1">👤 {{ marketplace.author.username }}</small>
                     {% if marketplace.tags.all %}
-                    <div class="mt-1">
+                    <div>
                         {% for tag in marketplace.tags.all|slice:":2" %}
-                        <span class="badge bg-secondary badge-tag">{{ tag.name }}</span>
+                        <span class="badge" style="background-color: rgba(118, 75, 162, 0.3); color: #d0b8ff; border: 1px solid rgba(118, 75, 162, 0.5);">{{ tag.name }}</span>
                         {% endfor %}
                         {% if marketplace.tags.count > 2 %}
-                        <span class="badge bg-light text-dark">+{{ marketplace.tags.count|add:"-2" }}</span>
+                        <span class="badge bg-secondary">+{{ marketplace.tags.count|add:"-2" }}</span>
                         {% endif %}
                     </div>
                     {% endif %}
@@ -63,27 +103,27 @@
 
 <!-- Пагинация -->
 {% if page_obj.has_other_pages %}
-<nav class="mt-4">
+<nav class="mt-5">
     <ul class="pagination justify-content-center">
         {% if page_obj.has_previous %}
         <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">← Назад</a>
+            <a class="page-link" style="background-color: var(--bg-card); border-color: var(--border-color); color: var(--text-main);" href="?page={{ page_obj.previous_page_number }}">← Назад</a>
         </li>
         {% endif %}
         
         {% for num in page_obj.paginator.page_range %}
             {% if page_obj.number == num %}
-            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            <li class="page-item active"><span class="page-link" style="background-color: var(--neon-primary); border-color: var(--neon-primary);">{{ num }}</span></li>
             {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                <a class="page-link" style="background-color: var(--bg-card); border-color: var(--border-color); color: var(--text-main);" href="?page={{ num }}">{{ num }}</a>
             </li>
             {% endif %}
         {% endfor %}
         
         {% if page_obj.has_next %}
         <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Вперёд →</a>
+            <a class="page-link" style="background-color: var(--bg-card); border-color: var(--border-color); color: var(--text-main);" href="?page={{ page_obj.next_page_number }}">Вперёд →</a>
         </li>
         {% endif %}
     </ul>
@@ -91,8 +131,9 @@
 {% endif %}
 
 {% else %}
-<div class="alert alert-info">
-    <i class="bi bi-info-circle"></i> Пока нет опубликованных товаров. <a href="{% url 'marketplace_list' %}">Перейти в каталог</a>.
+<div class="alert alert-info text-center py-4">
+    <i class="bi bi-info-circle fs-1 d-block mb-2"></i>
+    Пока нет опубликованных товаров. <a href="{% url 'marketplace:marketplace_list' %}" class="alert-link">Перейти в каталог</a>.
 </div>
 {% endif %}
 {% endblock %}

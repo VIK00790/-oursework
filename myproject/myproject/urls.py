@@ -25,7 +25,7 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('marketplace/', include('marketplace.urls')),
+    path('', include('marketplace.urls')),
     path('marketplace/login/', custom_login_view, name='login'),
     path('marketplace/logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('marketplace/accounts/', include('django.contrib.auth.urls')),

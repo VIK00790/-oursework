@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block title %}Статистика продаж — Профиль{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'marketplace:index' %}" class="text-decoration-none">Главная</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'marketplace:profile' %}" class="text-decoration-none">Профиль</a></li>
+                <li class="breadcrumb-item active">Статистика продаж</li>
+            </ol>
+        </nav>
+        <h2 class="text-white mb-4">
+            <i class="bi bi-graph-up-arrow text-primary"></i> Статистика продаж
+        </h2>
+    </div>
+</div>
+
+<!-- Карточки со статистикой -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+        <div class="card card-hover h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-box-seam fs-1 text-primary mb-2"></i>
+                <h3 class="text-white mb-0">{{ stats.total_items }}</h3>
+                <small class="text-muted">Всего товаров</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card card-hover h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-check-circle fs-1 text-success mb-2"></i>
+                <h3 class="text-white mb-0">{{ stats.published_items }}</h3>
+                <small class="text-muted">Опубликовано</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card card-hover h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-heart fs-1 text-danger mb-2"></i>
+                <h3 class="text-white mb-0">{{ stats.total_saves }}</h3>
+                <small class="text-muted">В избранном</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card card-hover h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-currency-ruble fs-1 text-warning mb-2"></i>
+                <h3 class="text-white mb-0">{{ stats.total_value|floatformat:0 }} ₽</h3>
+                <small class="text-muted">Общая стоимость</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Детальная статистика -->
+<div class="row g-4">
+    <!-- Топ товаров -->
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-trophy text-warning"></i> Топ-5 популярных товаров</h5>
+            </div>
+            <div class="card-body">
+                {% if top_items %}
+                <div class="list-group list-group-flush">
+                    {% for item in top_items %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <a href="{% url 'marketplace:marketplace_detail' item.pk %}" class="text-decoration-none">
+                                {{ item.title|truncatechars:40 }}
+                            </a>
+                            <div class="small text-muted">{{ item.price|floatformat:2 }} ₽</div>
+                        </div>
+                        <span class="badge bg-primary rounded-pill">
+                            <i class="bi bi-heart-fill"></i> {{ item.saves_count }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center mb-0">У вас пока нет товаров</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Последние товары -->
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-clock-history text-info"></i> Последние добавленные</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_items %}
+                <div class="list-group list-group-flush">
+                    {% for item in recent_items %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <a href="{% url 'marketplace:marketplace_detail' item.pk %}" class="text-decoration-none">
+                                {{ item.title|truncatechars:40 }}
+                            </a>
+                            <div class="small text-muted">{{ item.pub_date|date:"d.m.Y" }}</div>
+                        </div>
+                        <span class="badge bg-success">{{ item.price|floatformat:0 }} ₽</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center mb-0">Нет товаров</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Средние показатели -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-bar-chart text-primary"></i> Средние показатели</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <h4 class="text-white">{{ stats.avg_price|floatformat:2 }} ₽</h4>
+                        <small class="text-muted">Средняя цена товара</small>
+                    </div>
+                    <div class="col-md-4">
+                        <h4 class="text-white">
+                            {% if stats.total_items > 0 %}
+                                {{ stats.total_saves|floatformat:0 }}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </h4>
+                        <small class="text-muted">Всего добавлений в избранное</small>
+                    </div>
+                    <div class="col-md-4">
+                        <h4 class="text-white">
+                            {% if stats.total_items > 0 %}
+                                {% widthratio stats.published_items stats.total_items 100 %}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </h4>
+                        <small class="text-muted">Доля опубликованных</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4 text-center">
+    <a href="{% url 'marketplace:profile' %}" class="btn btn-outline-light">
+        <i class="bi bi-arrow-left"></i> Вернуться в профиль
+    </a>
+    <a href="{% url 'marketplace:profile_add' %}" class="btn btn-primary ms-2">
+        <i class="bi bi-plus-circle"></i> Добавить товар
+    </a>
+</div>
+{% endblock %}

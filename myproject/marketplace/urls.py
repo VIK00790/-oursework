@@ -19,4 +19,10 @@ urlpatterns = [
 
     path('profile/comments/edit/<int:comment_id>/', views.profile_edit_comment, name='profile_comment_edit'),
     path('profile/comments/delete/<int:comment_id>/', views.profile_delete_comment, name='profile_comment_delete'),
+
+    path('profile/sales-stats/', views.profile_sales_stats, name='profile_sales_stats'),
+    path('notifications/', views.notification_list, name='notifications'),
+    path('notifications/read/<int:notification_id>/', views.mark_notification_read, name='notification_read'),
+    path('notifications/delete/<int:notification_id>/', views.delete_notification, name='notification_delete'),
+    path('notifications/delete-all/', views.delete_all_notifications, name='notifications_delete_all'),
 ]

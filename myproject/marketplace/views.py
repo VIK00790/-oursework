@@ -295,3 +295,109 @@ def profile_delete_comment(request, comment_id):
     return render(request, 'marketplaces/profile_comment_confirm_delete.html', {
         'comment': comment,
     })
+
+from django.db.models import Sum, Count, Avg
+from .models import Notification
+
+@login_required
+def profile_sales_stats(request):
+    """Страница детальной статистики продаж"""
+    user = request.user
+    
+    # Все товары пользователя
+    user_marketplaces = Marketplace.objects.filter(author=user)
+    
+    # Общая статистика
+    stats = {
+        'total_items': user_marketplaces.count(),
+        'published_items': user_marketplaces.filter(is_public=True).count(),
+        'draft_items': user_marketplaces.filter(is_public=False).count(),
+        'total_value': user_marketplaces.aggregate(total=Sum('price'))['total'] or 0,
+        'avg_price': user_marketplaces.aggregate(avg=Avg('price'))['avg'] or 0,
+        'total_saves': user_marketplaces.aggregate(
+            total_saves=Count('savedmarketplace')
+        )['total_saves'] or 0,
+    }
+    
+    # Топ-5 самых популярных товаров (по добавлениям в избранное)
+    top_items = user_marketplaces.annotate(
+        saves_count=Count('savedmarketplace')
+    ).order_by('-saves_count')[:5]
+    
+    # Последние добавленные товары
+    recent_items = user_marketplaces.order_by('-pub_date')[:5]
+    
+    # Статистика по месяцам (последние 6 месяцев)
+    from django.utils import timezone
+    from datetime import timedelta
+    
+    six_months_ago = timezone.now() - timedelta(days=180)
+    monthly_stats = user_marketplaces.filter(
+        pub_date__gte=six_months_ago
+    ).extra(
+        select={'month': "strftime('%%Y-%%m', pub_date)"}
+    ).values('month').annotate(
+        count=Count('id'),
+        total=Sum('price')
+    ).order_by('month')
+    
+    context = {
+        'stats': stats,
+        'top_items': top_items,
+        'recent_items': recent_items,
+        'monthly_stats': list(monthly_stats),
+    }
+    
+    return render(request, 'marketplaces/profile_sales_stats.html', context)
+
+
+@login_required
+def notification_list(request):
+    """Список всех уведомлений пользователя"""
+    notifications = Notification.objects.filter(user=request.user)
+    
+    # Помечаем все как прочитанные
+    notifications.filter(is_read=False).update(is_read=True)
+    
+    return render(request, 'marketplaces/notifications.html', {
+        'notifications': notifications,
+    })
+
+
+@login_required
+def mark_notification_read(request, notification_id):
+    """Отметить одно уведомление как прочитанное"""
+    notification = get_object_or_404(Notification, id=notification_id, user=request.user)
+    notification.is_read = True
+    notification.save()
+    return redirect('marketplace:notifications')
+
+@login_required
+def delete_notification(request, notification_id):
+    """Удаление одного уведомления"""
+    notification = get_object_or_404(
+        Notification, 
+        id=notification_id, 
+        user=request.user  # Защита: только свои уведомления
+    )
+    
+    if request.method == 'POST':
+        title = notification.title
+        notification.delete()
+        messages.success(request, f'Уведомление «{title}» удалено.')
+        return redirect('marketplace:notifications')
+    
+    # Если GET-запрос, просто редиректим обратно
+    return redirect('marketplace:notifications')
+
+
+@login_required
+def delete_all_notifications(request):
+    """Удаление всех уведомлений пользователя"""
+    if request.method == 'POST':
+        count = Notification.objects.filter(user=request.user).count()
+        Notification.objects.filter(user=request.user).delete()
+        messages.success(request, f'Удалено уведомлений: {count}')
+        return redirect('marketplace:notifications')
+    
+    return redirect('marketplace:notifications')

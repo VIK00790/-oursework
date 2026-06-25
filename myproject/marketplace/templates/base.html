@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     
     <style>
-        /* === ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ТЕМЫ === */
         :root {
             --bg-dark: #0d0d14;
             --bg-card: #161622;
@@ -27,7 +26,6 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        /* === НАВИГАЦИЯ === */
         .navbar {
             background-color: rgba(13, 13, 20, 0.95) !important;
             backdrop-filter: blur(10px);
@@ -50,7 +48,6 @@
             color: var(--neon-secondary);
         }
 
-        /* === КАРТОЧКИ (Товары, Профиль, Формы) === */
         .card {
             background-color: var(--bg-card);
             border: 1px solid var(--border-color);
@@ -69,7 +66,6 @@
             font-weight: 600;
         }
 
-        /* === ФОРМЫ И INPUT === */
         .form-control, .form-select {
             background-color: #0d0d14;
             border: 1px solid var(--border-color);
@@ -93,7 +89,6 @@
             border-color: var(--neon-primary);
         }
 
-        /* === ТАБЛИЦЫ (Профиль) === */
         .table {
             color: var(--text-main);
             border-color: var(--border-color);
@@ -112,7 +107,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* === СПИСКИ И АЛЕРТЫ === */
         .list-group-item {
             background-color: var(--bg-card);
             border: 1px solid var(--border-color);
@@ -133,7 +127,6 @@
             color: #ffe69c;
         }
 
-        /* === ТЕКСТ И ССЫЛКИ === */
         a {
             color: var(--neon-secondary);
             text-decoration: none;
@@ -146,7 +139,6 @@
             color: var(--text-muted) !important;
         }
 
-        /* === КНОПКИ === */
         .btn-outline-primary {
             color: var(--neon-secondary);
             border-color: var(--neon-secondary);
@@ -166,7 +158,6 @@
             border-color: var(--text-muted);
         }
 
-        /* === HERO СЕКЦИЯ (Вариант 1) === */
         .hero-gaming {
             background: radial-gradient(circle at 50% 50%, #1e1e2f 0%, #0d0d14 100%);
             border-bottom: 2px solid var(--neon-primary);
@@ -195,7 +186,6 @@
             font-weight: 300;
         }
 
-        /* Скроллбар для тегов */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -231,10 +221,14 @@
                     </li>
                     {% if user.is_authenticated %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'marketplace:saved_marketplaces' %}">
-                                <i class="bi bi-bookmark-heart"></i> Избранное
-                                {% if user.savedmarketplace_set.count %}
-                                    <span class="badge bg-danger rounded-pill">{{ user.savedmarketplace_set.count }}</span>
+                            <a class="nav-link position-relative" href="{% url 'marketplace:notifications' %}">
+                                <i class="bi bi-bell fs-5"></i>
+                                {% if unread_notifications_count > 0 %}
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                    style="font-size: 0.65rem; animation: pulse 2s infinite;">
+                                    {{ unread_notifications_count }}
+                                    <span class="visually-hidden">непрочитанных уведомлений</span>
+                                </span>
                                 {% endif %}
                             </a>
                         </li>

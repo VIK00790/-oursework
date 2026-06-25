@@ -56,3 +56,29 @@ class Comment(models.Model):
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
 
+class Notification(models.Model):
+    NOTIFICATION_TYPES = [
+        ('sales_stats', 'Статистика продаж'),
+        ('system', 'Системное'),
+        ('promo', 'Акция'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Пользователь')
+    title = models.CharField(max_length=200, verbose_name='Заголовок')
+    message = models.TextField(verbose_name='Сообщение')
+    notification_type = models.CharField(
+        max_length=20, 
+        choices=NOTIFICATION_TYPES, 
+        default='system',
+        verbose_name='Тип'
+    )
+    is_read = models.BooleanField(default=False, verbose_name='Прочитано')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    
+    class Meta:
+        verbose_name = 'Уведомление'
+        verbose_name_plural = 'Уведомления'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f'{self.user.username}: {self.title}'

@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Регистрация — Nexus Skins World{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white text-center">
+                <h4 class="mb-0"><i class="bi bi-person-plus"></i> Регистрация</h4>
+            </div>
+            <div class="card-body">
+                <p class="text-muted text-center small mb-3">
+                    После регистрации на вашу почту будет отправлена ссылка для подтверждения.
+                </p>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle"></i> 
+                        Исправьте ошибки:
+                        <ul class="mb-0 mt-2 small">
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label">
+                            <i class="bi bi-person"></i> Имя пользователя
+                        </label>
+                        {{ form.username }}
+                        <div class="form-text">Будет отображаться на сайте</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_email" class="form-label">
+                            <i class="bi bi-envelope"></i> Email
+                        </label>
+                        {{ form.email }}
+                        <div class="form-text">На этот адрес придёт ссылка подтверждения</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_password1" class="form-label">
+                            <i class="bi bi-key"></i> Пароль
+                        </label>
+                        {{ form.password1 }}
+                        <div class="form-text">Минимум 8 символов</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_password2" class="form-label">
+                            <i class="bi bi-key-fill"></i> Подтверждение пароля
+                        </label>
+                        {{ form.password2 }}
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-person-plus"></i> Зарегистрироваться
+                        </button>
+                    </div>
+                </form>
+
+                <hr>
+                <div class="text-center small">
+                    Уже есть аккаунт? <a href="{% url 'login' %}">Войти</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

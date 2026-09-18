@@ -48,12 +48,16 @@
 
         <!-- Комментарии -->
         <div class="mt-5">
-            <h4 class="mb-3">💬 Отзывы ({{ comments.count }})</h4>
+            <h4 class="mb-3"> Отзывы ({{ comments.count }})</h4>
             
             {% if user.is_authenticated %}
             <div class="card mb-4">
                 <div class="card-body">
                     <h5 class="card-title small text-muted mb-3">Оставить отзыв</h5>
+                    <div class="alert alert-info small mb-3" style="background: rgba(102, 126, 234, 0.1); border-color: rgba(102, 126, 234, 0.3); color: #a3bffa;">
+                        <i class="bi bi-info-circle"></i> 
+                        Все комментарии проходят модерацию и появятся после проверки администратором.
+                    </div>
                     <form method="post">
                         {% csrf_token %}
                         <div class="mb-3">
@@ -63,7 +67,7 @@
                             {% endif %}
                         </div>
                         <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-send"></i> Опубликовать
+                            <i class="bi bi-send"></i> Отправить на модерацию
                         </button>
                     </form>
                 </div>

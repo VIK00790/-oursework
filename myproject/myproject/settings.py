@@ -139,6 +139,13 @@ EMAIL_BACKED = 'django.core.email.backends.EmailBackends'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-#ыограничить размер загружаемых файлов:
+# ограничить размер загружаемых файлов:
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5 MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
+
+# Настройки email (для тестирования используем консольный бэкенд)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# В режиме разработки письма будут выводиться в терминал, а не отправляться реально
+
+DEFAULT_FROM_EMAIL = 'noreply@nexusskins.ru'
+EMAIL_CONFIRMATION_TIMEOUT = 86400

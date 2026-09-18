@@ -1,12 +1,8 @@
 from django.db import models
-
-# Create your models here.
-from django.db import models
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils import timezone
 
-# Create your models here.
 class Tag(models.Model):
     name = models.CharField(max_length=50, unique=True)
     slug = models.SlugField(unique=True)
@@ -50,8 +46,14 @@ class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Пользователь')
     text = models.TextField(verbose_name='Комментарий')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    is_approved = models.BooleanField(
+        default=False, 
+        verbose_name='Одобрено модератором',
+        help_text='Комментарий будет виден после одобрения'
+    )
     def __str__(self):
-        return f'Коментарий от {self.user.username} к статье {self.marketplace.title}'
+        status = 'Одобрено' if self.is_approved else 'В ожидании'
+        return f'{status} {self.user.username} к "{self.marketplace.title}"'
     class Meta:
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'

@@ -124,9 +124,13 @@
                                 <td class="text-muted small">{{ item.pub_date|date:"d.m.Y" }}</td>
                                 <td>
                                     {% if item.is_public %}
-                                    <span class="badge bg-success">Опубликовано</span>
+                                    <span class="badge" style="background-color: rgba(0, 255, 157, 0.15); color: #00ff9d; border: 1px solid rgba(0, 255, 157, 0.4);">
+                                        <i class="bi bi-check-circle"></i> Опубликовано
+                                    </span>
                                     {% else %}
-                                    <span class="badge bg-secondary">Черновик</span>
+                                    <span class="badge" style="background-color: rgba(255, 193, 7, 0.15); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.4);">
+                                        <i class="bi bi-hourglass-split"></i> На модерации
+                                    </span>
                                     {% endif %}
                                 </td>
                                 <td class="text-end">

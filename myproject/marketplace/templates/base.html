@@ -232,6 +232,11 @@
                                 {% endif %}
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'marketplace:saved_marketplaces' %}">
+                                <i class="bi bi-bookmark-heart"></i> Корзина
+                            </a>
+                        </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                                 <i class="bi bi-person-circle"></i> {{ user.username }}
@@ -242,9 +247,9 @@
                                         <i class="bi bi-person"></i> Мой профиль
                                     </a>
                                 </li>
-                                <li><hr class="dropdown-divider" style="border-color: var(--border-color);"></li>
+                                <li><hr class="dropdown-divider"></li>
                                 <li>
-                                    <form method="post" action="{% url 'logout' %}" class="d-inline">
+                                    <form method="post" action="{% url 'logout' %}">
                                         {% csrf_token %}
                                         <button type="submit" class="dropdown-item text-danger">
                                             <i class="bi bi-box-arrow-right"></i> Выйти
@@ -257,6 +262,11 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'login' %}?next={{ request.path }}">
                                 <i class="bi bi-box-arrow-in-right"></i> Войти
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'register' %}">
+                                <i class="bi bi-person-plus"></i> Регистрация
                             </a>
                         </li>
                     {% endif %}

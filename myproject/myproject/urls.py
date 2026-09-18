@@ -16,19 +16,25 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-
-from django.contrib.auth import views as auth_views 
-from marketplace.views import custom_login_view
-
+from django.contrib.auth import views as auth_views
+from marketplace.views import (custom_login_view, register_view, confirm_email_view, resend_confirmation_view,)
 from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('marketplace.urls')),
+    
+    #Аутентификация
     path('marketplace/login/', custom_login_view, name='login'),
     path('marketplace/logout/', auth_views.LogoutView.as_view(), name='logout'),
-    path('marketplace/accounts/', include('django.contrib.auth.urls')),
+    path('marketplace/register/', register_view, name='register'),
+    
+    # Подтверждение email
+    path('marketplace/confirm-email/<uidb64>/<token>/', 
+         confirm_email_view, name='confirm_email'),
+    path('marketplace/resend-confirmation/', 
+         resend_confirmation_view, name='resend_confirmation'),
 ]
 
 if settings.DEBUG:

@@ -38,8 +38,8 @@ class SavedMarketplace(models.Model):
         return f'{self.user.username} - {self.marketplace.title}'
     class Meta:
         unique_together = ['user', 'marketplace']
-        verbose_name = 'Сохраненная статья'
-        verbose_name_plural = 'Сохраненные статьи'
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранное'
 
 class Comment(models.Model):
     marketplace = models.ForeignKey(Marketplace, on_delete=models.CASCADE, verbose_name='Статья')

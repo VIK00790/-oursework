@@ -128,3 +128,20 @@ def reject_comments(self, request, queryset):
         )
     
     self.message_user(request, f'Отклонено комментариев: {count}')
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ['user', 'title', 'notification_type', 'is_read', 'created_at']
+    list_filter = ['is_read', 'notification_type', 'created_at', 'user']
+    search_fields = ['title', 'message', 'user__username']
+    actions = ['mark_as_read', 'mark_as_unread', 'delete_selected_notifications']
+    
+    def mark_as_read(self, request, queryset):
+        count = queryset.update(is_read=True)
+        self.message_user(request, f'Помечено как прочитанные: {count}')
+    mark_as_read.short_description = 'Пометить как прочитанные'
+    
+    def mark_as_unread(self, request, queryset):
+        count = queryset.update(is_read=False)
+        self.message_user(request, f'Помечено как непрочитанные: {count}')
+    mark_as_unread.short_description = 'Пометить как непрочитанные'

@@ -123,7 +123,7 @@ def marketplace_detail(request, pk):
             comment = form.save(commit=False)
             comment.marketplace = marketplace
             comment.user = request.user
-            comment.is_approved = False  # ✅ На модерацию!
+            comment.is_approved = False  # На модерацию!
             comment.save()
             
             # Уведомление пользователю
@@ -246,7 +246,7 @@ def profile_edit_marketplace(request, pk):
         form = MarketplaceForm(request.POST, request.FILES, instance=marketplace)
         if form.is_valid():
             updated = form.save(commit=False)
-            # ✅ После редактирования — снова на модерацию
+            #  После редактирования — снова на модерацию
             updated.is_public = False
             updated.save()
             form.save_m2m()
